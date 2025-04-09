@@ -1,9 +1,9 @@
 import axios from 'axios';
 import { io } from 'socket.io-client';
-import type { ApiResponse, StreamResponse } from '../types';
+import type { ApiResponse, StreamResponse, DistanceResponse } from '../types';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://172.17.10.188:5000';
 // const API_URL = import.meta.env.VITE_API_URL || 'http://192.168.1.101:5000';
+const API_URL = import.meta.env.VITE_API_URL || 'http://172.17.10.188:5000';
 
 // Create axios instance
 const api = axios.create({
@@ -17,45 +17,42 @@ export const socket = io(API_URL, {
 });
 
 // Movement controls
-// Allowed actions: "forward", "backward", "turn_left", "turn_right", "look_up", "look_down", "act_dead"
-export const moveRobot = async (
-  action: 'forward' | 'backward' | 'turn_left' | 'turn_right' | 'look_up' | 'look_down' | 'act_dead',
-  speed?: number
-) => {
-  return api.post<ApiResponse>('/movement', { action, speed });
+export const moveRobot = async (direction: 'up' | 'down' | 'left' | 'right') => {
+  return api.post<ApiResponse>('/robot/move', { direction });
 };
 
-// Camera/photo functions
+export const setSpeed = async (speed: number) => {
+  return api.post<ApiResponse>('/robot/speed', { speed });
+};
+
+// Sensor data
+export const getDistance = async () => {
+  return api.get<DistanceResponse>('/robot/distance');
+};
+
+// Special actions
+export const triggerDeadAction = async () => {
+  return api.post<ApiResponse>('/robot/dead');
+};
+
+export const playSound = async (type: 'death' | 'distraction') => {
+  return api.post<ApiResponse>('/robot/play-sound', { type });
+};
+
+// Camera functions
 export const takePhoto = async () => {
-  return api.post<ApiResponse>('/photo');
+  return api.post<ApiResponse>('/robot/camera/photo');
 };
 
-// Vision functions
-export const setColorDetection = async (index: number) => {
-  // index: 0 => close/off, 1: red, 2: orange, 3: yellow, 4: green, 5: blue, 6: purple
-  return api.post<ApiResponse>('/color', { index });
+// Event management
+export const addEvent = async (description: string) => {
+  return api.post<ApiResponse>('/events', { description });
 };
 
-export const toggleQRDetection = async () => {
-  return api.post<ApiResponse>('/qr');
+export const getEvents = async () => {
+  return api.get<ApiResponse>('/events');
 };
 
-export const toggleFaceDetection = async () => {
-  return api.post<ApiResponse>('/face');
-};
 
-export const getObjectInfo = async () => {
-  return api.get<ApiResponse>('/object-info');
-};
-
-// Recording control
-export const controlRecording = async (action: 'toggle' | 'stop') => {
-  return api.post<ApiResponse>('/record', { action });
-};
-
-// Sound control (plays a distraction sound)
-export const playSound = async () => {
-  return api.post<ApiResponse>('/sound');
-};
 
 export default api;
