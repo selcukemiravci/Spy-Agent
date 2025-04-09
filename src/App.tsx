@@ -3,6 +3,7 @@ import { Eye, History, Menu, X } from 'lucide-react';
 import { VideoFeed } from './components/VideoFeed/VideoFeed';
 import { MovementControls } from './components/Controls/MovementControls';
 import { MovementData } from './components/Controls/MovementData';
+import { SpecialActions } from './components/Controls/SpecialActions';
 import { Timeline } from './components/Timeline/Timeline';
 import { SystemAlert } from './components/Alert/SystemAlert';
 import { EventModal } from './components/Events/EventModal';
@@ -160,11 +161,14 @@ function App() {
                         onSpeedChange={setSpeed}
                         onLogsToggle={() => setShowLogs(!showLogs)}
                         onMovementDataToggle={() => setShowMovementData(!showMovementData)}
-                        disabled={mode === 'review'}
+                        disabled={mode !== 'live'}
                       >
-                        <MovementControls disabled={mode === 'review'} />
+                        <MovementControls disabled={mode !== 'live'} />
                       </MovementData>
                     </div>
+                    {/* <div className="bg-white rounded-lg shadow">
+                      <SpecialActions disabled={mode !== 'live'} />
+                    </div> */}
                     <div className="py-2">
                       <button
                         onClick={handleQuickMark}
