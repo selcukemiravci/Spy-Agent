@@ -1,5 +1,5 @@
 import React from 'react';
-import { setSpeed } from '../../services/api';
+import { setSpeed, playSound, triggerDeadAction } from '../../services/api';
 import type { MovementData as MovementDataType } from '../../types';
 
 interface MovementDataProps {
@@ -25,6 +25,14 @@ export const MovementData: React.FC<MovementDataProps> = ({
   disabled = false,
   children,
 }) => {
+  // Define the three speed options and their labels.
+  const speedOptions = [10, 50, 100];
+  const speedDescriptions = ["Low", "Medium", "High"];
+
+  // Determine the slider's index based on the current speed.
+  const currentSpeedIndex = speedOptions.indexOf(speed);
+  const sliderValue = currentSpeedIndex === -1 ? 0 : currentSpeedIndex;
+
   const handleSpeedChange = async (newSpeed: number) => {
     if (disabled) return;
     try {
@@ -35,19 +43,38 @@ export const MovementData: React.FC<MovementDataProps> = ({
     }
   };
 
+  const handleMakeDistraction = async () => {
+    if (disabled) return;
+    try {
+      // Calls the playSound endpoint with "distraction" type.
+      await playSound('distraction');
+    } catch (error) {
+      console.error('Make Distraction error:', error instanceof Error ? error.message : 'Unknown error');
+    }
+  };
+
+  const handlePlayDead = async () => {
+    if (disabled) return;
+    try {
+      // Calls the triggerDeadAction endpoint.
+      await triggerDeadAction();
+    } catch (error) {
+      console.error('Play Dead error:', error instanceof Error ? error.message : 'Unknown error');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-lg font-semibold mb-4">Movement Data</h2>
         <div className="space-y-4">
-          {showMovementData && (
+          {showMovementData ? (
             <div>
               <p>Speed: {data.speed} cm/s</p>
               <p>Direction: {data.direction}</p>
               <p>Tilt: {data.tilt}°</p>
             </div>
-          )}
-          {!showMovementData && (
+          ) : (
             <div className="text-gray-500">
               <p>Speed: N/A</p>
               <p>Direction: N/A</p>
@@ -59,15 +86,20 @@ export const MovementData: React.FC<MovementDataProps> = ({
             <input
               type="range"
               min="0"
-              max="10"
-              value={speed}
-              onChange={(e) => handleSpeedChange(parseInt(e.target.value))}
+              max="2"
+              step="1"
+              value={sliderValue}
+              onChange={(e) =>
+                handleSpeedChange(speedOptions[parseInt(e.target.value)])
+              }
               className={`w-full h-2 rounded-lg appearance-none cursor-pointer ${
                 disabled ? 'bg-gray-200 opacity-50' : 'bg-gray-200'
               }`}
               disabled={disabled}
             />
-            <div className="text-sm text-gray-600 mt-1">Current Speed: {speed}</div>
+            <div className="text-sm text-gray-600 mt-1">
+              Current Speed: {speed} ({speedDescriptions[sliderValue]})
+            </div>
           </div>
           <div className="flex items-center justify-between">
             <span>Logs</span>
@@ -110,6 +142,7 @@ export const MovementData: React.FC<MovementDataProps> = ({
         <h3 className="text-sm font-medium text-gray-700 mb-2">Spy Tools</h3>
         <div className="grid grid-cols-2 gap-2">
           <button 
+            onClick={handleMakeDistraction}
             className={`px-3 py-2 rounded-lg transition-colors ${
               disabled 
                 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
@@ -120,6 +153,7 @@ export const MovementData: React.FC<MovementDataProps> = ({
             Make Distraction
           </button>
           <button 
+            onClick={handlePlayDead}
             className={`px-3 py-2 rounded-lg transition-colors ${
               disabled 
                 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 

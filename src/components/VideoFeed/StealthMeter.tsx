@@ -1,11 +1,64 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Shield, AlertTriangle, AlertOctagon } from 'lucide-react';
+import { getDistance, getStatus } from '../../services/api';
 
-interface StealthMeterProps {
-  level: number; // 0-100
-}
+export const StealthMeter: React.FC = () => {
+  const [level, setLevel] = useState(0);
+  const [shutdown, setShutdown] = useState<boolean>(false);
 
-export const StealthMeter: React.FC<StealthMeterProps> = ({ level }) => {
+  // Function to map distance (cm) to a stealth level (0-100).
+  const mapDistanceToStealthLevel = (distance: number): number => {
+    if (distance === -2) {
+      console.log('Distance is -2 (no reading). Setting level to 0.');
+      return 0;
+    }
+    if (distance < 30) {
+      console.log('Distance less than 30cm: risk 100.');
+      return 100;
+    }
+    if (distance > 200) {
+      console.log('Distance greater than 200cm: safe (0).');
+      return 0;
+    }
+    // Linear mapping between 30 and 200.
+    const computed = Math.round(((200 - distance) * 100) / 170);
+    console.log(`For distance ${distance}cm, computed level is ${computed}.`);
+    return computed;
+  };
+
+  useEffect(() => {
+    let distanceInterval: NodeJS.Timeout;
+
+    // Poll status first. If shutdown, stop distance polling.
+    const pollStatusAndDistance = async () => {
+      try {
+        const statusRes = await getStatus();
+        if (statusRes.data.shutdown) {
+          console.log("Shutdown signalled; stopping distance fetch.");
+          setShutdown(true);
+          clearInterval(distanceInterval);
+          return;
+        } else {
+          setShutdown(false);
+        }
+        // Fetch distance if not shutdown.
+        const distanceRes = await getDistance();
+        const distance = distanceRes.data.distance;
+        console.log('Fetched distance:', distance);
+        const newLevel = mapDistanceToStealthLevel(distance);
+        setLevel(newLevel);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+
+    // Start polling every 1000ms.
+    pollStatusAndDistance(); // Initial fetch.
+    distanceInterval = setInterval(pollStatusAndDistance, 1000);
+    
+    return () => clearInterval(distanceInterval);
+  }, []);
+
   const getStealthColor = (level: number) => {
     if (level <= 30) return 'bg-green-500';
     if (level <= 70) return 'bg-orange-500';
@@ -13,9 +66,11 @@ export const StealthMeter: React.FC<StealthMeterProps> = ({ level }) => {
   };
 
   const StealthIcon = () => {
-    if (level <= 30) return <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-green-700" />;
-    if (level <= 70) return <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-orange-700" />;
-    return <AlertOctagon className="h-4 w-4 sm:h-5 sm:w-5 text-red-700" />;
+    if (level <= 30)
+      return <Shield className="h-6 w-6 text-green-700" />;
+    if (level <= 70)
+      return <AlertTriangle className="h-6 w-6 text-orange-700" />;
+    return <AlertOctagon className="h-6 w-6 text-red-700" />;
   };
 
   return (
@@ -35,3 +90,5 @@ export const StealthMeter: React.FC<StealthMeterProps> = ({ level }) => {
     </div>
   );
 };
+
+export default StealthMeter;

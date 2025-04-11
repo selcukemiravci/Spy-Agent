@@ -10,11 +10,11 @@ interface VideoControlsProps {
 }
 
 export const VideoControls: React.FC<VideoControlsProps> = ({
-  isPlaying,
-  volume,
-  disabled = false,
-  onPlayToggle,
-  onVolumeChange,
+  // isPlaying,
+  // volume,
+  // disabled = false,
+  // onPlayToggle,
+  // onVolumeChange,
 }) => {
   return (
     <>
@@ -29,7 +29,7 @@ export const VideoControls: React.FC<VideoControlsProps> = ({
       </div>
 
       {/* Bottom controls */}
-      <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 p-4">
+      {/* <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 p-4">
         <div className="flex items-center space-x-4">
           {!disabled && (
             <button onClick={onPlayToggle}>
@@ -55,7 +55,7 @@ export const VideoControls: React.FC<VideoControlsProps> = ({
             />
           </div>
         </div>
-      </div>
+      </div> */}
     </>
   );
 };
