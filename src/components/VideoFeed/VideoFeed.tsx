@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { VideoControls } from './VideoControls';
 import { StealthMeter } from './StealthMeter';
 import type { Mode, Event } from '../../types';
+
+// We only need getLatestRecording now.
 import { getLatestRecording } from '../../services/api';
 
 interface VideoFeedProps {
@@ -16,6 +18,7 @@ export const VideoFeed: React.FC<VideoFeedProps> = ({ mode, events }) => {
   const [shutdown, setShutdown] = useState(false);
   const [latestRecording, setLatestRecording] = useState<string | null>(null);
 
+  // When mode changes, decide whether to show the live feed or not.
   useEffect(() => {
     if (mode === 'live') {
       setIsPlaying(true);
@@ -24,26 +27,7 @@ export const VideoFeed: React.FC<VideoFeedProps> = ({ mode, events }) => {
     }
   }, [mode]);
 
-  // Poll the /status endpoint every second for shutdown signal.
-  useEffect(() => {
-    const intervalId = setInterval(async () => {
-      try {
-        const res = await getStatus();
-        if (res.data.shutdown) {
-          setShutdown(true);
-          setIsPlaying(false); // Pause live stream if shutdown.
-          await pauseVideoStream();
-        } else {
-          setShutdown(false);
-        }
-      } catch (err) {
-        console.error("Error polling status:", err);
-      }
-    }, 1000);
-    return () => clearInterval(intervalId);
-  }, []);
-
-  // When in review mode, fetch the latest recording.
+  // If in review mode, fetch the latest MP4 filename from /latest.
   useEffect(() => {
     if (mode === 'review') {
       (async () => {
@@ -59,33 +43,56 @@ export const VideoFeed: React.FC<VideoFeedProps> = ({ mode, events }) => {
     }
   }, [mode]);
 
+  // Called by the play/pause button in VideoControls
   const handlePlayToggle = () => {
+    // If the system is flagged as shutdown, ignore user play toggles
     if (shutdown) return;
-    setIsPlaying(!isPlaying);
+    setIsPlaying((prev) => !prev);
   };
 
   return (
     <div className="relative aspect-[16/10] bg-black rounded-lg overflow-hidden">
+      {/* Shows LIVE or REVIEW in the top-left corner */}
       <div className="absolute top-2 left-2 px-3 py-1 bg-blue-600 text-white rounded-full text-sm z-10">
         {mode === 'live' ? 'LIVE' : 'REVIEW'}
       </div>
 
       {mode === 'live' ? (
-        // Live mode: show the live MJPEG stream.
-        <img 
-          src="http://192.168.1.101:9000/mjpg"
+        // LIVE mode: show MJPEG stream from your camera
+        // Home 
+        // <img
+        //   src="http://192.168.1.101:9000/mjpg"
+        //   className="absolute inset-0 w-full h-full object-cover"
+        //   style={{ display: isPlaying ? 'block' : 'none' }}
+        //   alt="Live camera feed"
+        // />
+        // School
+        <img
+          src="http://172.17.10.188:9000/mjpg"
           className="absolute inset-0 w-full h-full object-cover"
           style={{ display: isPlaying ? 'block' : 'none' }}
           alt="Live camera feed"
         />
       ) : (
-        // Review mode: show the latest recorded video.
+        // REVIEW mode: show the latest MP4
         <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
           {latestRecording ? (
+            // Home
+            // <video controls className="w-full h-full object-cover">
+            //   <source
+            //     src={`http://192.168.1.101:5000/recordings/${latestRecording}`}
+            //     type="video/mp4"
+            //   />
+            //   Your browser does not support the video tag.
+            // </video>
+            // School
             <video controls className="w-full h-full object-cover">
-              <source src={`http://192.168.1.101:5000/recordings/${latestRecording}`} type="video/mp4" />
-              Your browser does not support the video tag.
-            </video>
+            <source
+              src={`http://172.17.10.188:5000/recordings/${latestRecording}`}
+              type="video/mp4"
+            />
+            Your browser does not support the video tag.
+          </video>
           ) : (
             <div className="text-white text-center p-4">
               <p className="text-lg font-medium">No Recording Available</p>
@@ -95,6 +102,7 @@ export const VideoFeed: React.FC<VideoFeedProps> = ({ mode, events }) => {
         </div>
       )}
 
+      {/* Optional shutdown overlay if some other code sets shutdown=true */}
       {shutdown && (
         <div className="absolute inset-0 flex items-center justify-center bg-red-500 bg-opacity-75 z-20">
           <div className="text-white text-xl font-bold">
@@ -103,7 +111,10 @@ export const VideoFeed: React.FC<VideoFeedProps> = ({ mode, events }) => {
         </div>
       )}
 
+      {/* Example stealth meter UI */}
       <StealthMeter level={stealthLevel} />
+
+      {/* Play/pause & volume controls */}
       <VideoControls
         isPlaying={isPlaying}
         volume={volume}

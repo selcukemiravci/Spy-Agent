@@ -32,3 +32,12 @@ export interface DistanceResponse {
   simulation_mode?: boolean;
   message?: string;
 }
+
+export interface Event {
+  id: string;
+  timestamp: string;      // or Date, but strings are simpler if coming from JSON
+  description: string;
+  type: 'auto' | 'manual'; // or any other possible values
+  severity?: string;       // 'info' | 'warning' | 'critical' | ...
+  // etc. if you want more fields
+}

@@ -3,7 +3,9 @@ import { io } from 'socket.io-client';
 import type { ApiResponse, StreamResponse, DistanceResponse } from '../types';
 
 // Use a single base URL (update this as needed).
-const API_URL = import.meta.env.VITE_API_URL || 'http://192.168.1.101:5000';
+// const API_URL = import.meta.env.VITE_API_URL || 'http://192.168.1.101:5000'; 
+const API_URL = import.meta.env.VITE_API_URL || 'http://172.17.10.188:5000';
+
 
 // Create the axios instance for the single Flask server.
 const api = axios.create({
@@ -89,6 +91,11 @@ export const getLatestRecording = async () => {
 // New helper: pauseVideoStream sends a POST to /pause to stop video recording.
 export const pauseVideoStream = async () => {
   return api.post<ApiResponse>('/pause');
+};
+
+export const getLogs = async () => {
+  const response = await api.get<Event[]>('/logs');
+  return response.data; // Return the actual array of logs
 };
 
 export default api;
